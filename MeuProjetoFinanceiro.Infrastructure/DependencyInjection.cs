@@ -27,6 +27,7 @@ public static class DependencyInjection
         services.AddScoped<IImportacaoPlanilhaFinanceiraService, ImportacaoPlanilhaFinanceiraService>();
         services.AddScoped<IPlanejamentoCartaoCreditoService, PlanejamentoCartaoCreditoService>();
         services.AddScoped<IPlanejamentoDespesasFixasService, PlanejamentoDespesasFixasService>();
+        services.AddScoped<IControleMensalService, ControleMensalService>();
 
         return services;
     }
