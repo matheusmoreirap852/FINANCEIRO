@@ -120,6 +120,42 @@
 </div>
 
 <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white fw-semibold">Registrar fatura fechada</div>
+    <div class="card-body">
+        <form asp-action="RegistrarFatura" method="post" class="row g-3">
+            @Html.AntiForgeryToken()
+            <div class="col-md-2">
+                <label class="form-label">Cartao</label>
+                <input class="form-control" name="Cartao" value="ITAU" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Valor da fatura</label>
+                <input class="form-control" name="ValorTotal" type="number" min="0" step="0.01" />
+            </div>
+            <div class="col-md-1">
+                <label class="form-label">Mes</label>
+                <input class="form-control" name="Mes" type="number" min="1" max="12" value="@DateTime.Today.Month" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Ano</label>
+                <input class="form-control" name="Ano" type="number" value="@Model.Ano" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Vencimento</label>
+                <input class="form-control" name="Vencimento" type="date" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Observacao</label>
+                <input class="form-control" name="Observacao" placeholder="Ex: acordo, fatura fechada" />
+            </div>
+            <div class="col-12">
+                <button class="btn btn-outline-primary" type="submit">Registrar fatura</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
     <div class="card-header bg-white fw-semibold">Projecao mensal</div>
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
@@ -128,6 +164,7 @@
                     <th>Mes</th>
                     <th class="text-end">Entradas</th>
                     <th class="text-end">Cartao</th>
+                    <th class="text-end">Fixas</th>
                     <th class="text-end">Outras despesas</th>
                     <th class="text-end">Sobra apos cartao</th>
                     <th class="text-end">Resultado final</th>
@@ -140,6 +177,7 @@
                     <td>@mes.Periodo</td>
                     <td class="text-end text-success">@mes.ReceitaPrevista.ToString("C")</td>
                     <td class="text-end text-danger">@mes.FaturaProjetada.ToString("C")</td>
+                    <td class="text-end">@mes.DespesasFixas.ToString("C")</td>
                     <td class="text-end">@mes.OutrasDespesas.ToString("C")</td>
                     <td class="text-end">@mes.SaldoAposCartao.ToString("C")</td>
                     <td class="text-end fw-semibold @(mes.SaldoFinalProjetado < 0 ? "text-danger" : "text-success")">@mes.SaldoFinalProjetado.ToString("C")</td>
@@ -172,6 +210,27 @@
                             <button class="btn btn-sm btn-outline-danger" type="submit">Remover</button>
                         </form>
                     </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mt-4">
+    <div class="card-header bg-white fw-semibold">Faturas informadas</div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead><tr><th>Cartao</th><th>Periodo</th><th>Vencimento</th><th class="text-end">Valor</th><th>Observacao</th></tr></thead>
+            <tbody>
+            @foreach (var item in Model.Faturas)
+            {
+                <tr>
+                    <td>@item.Cartao</td>
+                    <td>@item.Mes/@item.Ano</td>
+                    <td>@(item.Vencimento?.ToString("dd/MM/yyyy") ?? "-")</td>
+                    <td class="text-end">@item.ValorTotal.ToString("C")</td>
+                    <td>@item.Observacao</td>
                 </tr>
             }
             </tbody>

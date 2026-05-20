@@ -50,6 +50,21 @@ public class CartaoCreditoController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RegistrarFatura(FaturaCartaoCreditoDto dto, CancellationToken cancellationToken)
+    {
+        if (dto.ValorTotal <= 0)
+        {
+            TempData["Erro"] = "Informe o valor da fatura.";
+            return RedirectToAction(nameof(Index), new { ano = dto.Ano });
+        }
+
+        await _service.CriarOuAtualizarFaturaAsync(dto, cancellationToken);
+        TempData["Sucesso"] = "Fatura registrada no planejamento do cartao.";
+        return RedirectToAction(nameof(Index), new { ano = dto.Ano });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> RemoverLancamento(int id, int ano, CancellationToken cancellationToken)
     {
         await _service.RemoverLancamentoAsync(id, cancellationToken);

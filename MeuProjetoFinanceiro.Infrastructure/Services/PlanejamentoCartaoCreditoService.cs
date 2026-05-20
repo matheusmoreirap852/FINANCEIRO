@@ -31,6 +31,13 @@ public class PlanejamentoCartaoCreditoService : IPlanejamentoCartaoCreditoServic
             .ThenByDescending(l => l.MesInicial)
             .ToListAsync(cancellationToken);
 
+        var faturas = await _context.FaturasCartaoCredito
+            .Where(f => f.Ano == ano)
+            .AsNoTracking()
+            .OrderBy(f => f.Ano)
+            .ThenBy(f => f.Mes)
+            .ToListAsync(cancellationToken);
+
         var despesasImportadas = await _context.Transacoes
             .Where(t => t.Data.Year == ano && t.Tipo == TipoTransacao.Despesa)
             .AsNoTracking()
@@ -41,6 +48,10 @@ public class PlanejamentoCartaoCreditoService : IPlanejamentoCartaoCreditoServic
             {
                 var receitaMes = receitas.Where(r => r.Mes == mes).Sum(r => r.Valor);
                 var faturaProjetada = lancamentos.Sum(l => ValorParcelaNoMes(l, ano, mes));
+                var faturaFechada = faturas.Where(f => f.Mes == mes).Sum(f => f.ValorTotal);
+                var despesasFixas = despesasImportadas
+                    .Where(t => t.Data.Year == ano && t.Data.Month == mes && PlanejamentoDespesasFixasService.EhDespesaFixa(t.Descricao))
+                    .Sum(t => t.Valor);
                 var outrasDespesas = despesasImportadas
                     .Where(t => t.Data.Year == ano && t.Data.Month == mes && !PareceCartao(t.Descricao) && !PlanejamentoDespesasFixasService.EhDespesaFixa(t.Descricao))
                     .Sum(t => t.Valor);
@@ -51,9 +62,10 @@ public class PlanejamentoCartaoCreditoService : IPlanejamentoCartaoCreditoServic
                     Mes = mes,
                     Periodo = new DateTime(ano, mes, 1).ToString("MMM/yyyy"),
                     ReceitaPrevista = receitaMes,
-                    FaturaProjetada = faturaProjetada + despesasImportadas
+                    FaturaProjetada = faturaFechada > 0 ? faturaFechada : faturaProjetada + despesasImportadas
                         .Where(t => t.Data.Year == ano && t.Data.Month == mes && PareceCartao(t.Descricao))
                         .Sum(t => t.Valor),
+                    DespesasFixas = despesasFixas,
                     OutrasDespesas = outrasDespesas
                 };
             })
@@ -66,7 +78,8 @@ public class PlanejamentoCartaoCreditoService : IPlanejamentoCartaoCreditoServic
             MaiorFaturaProjetada = meses.Max(m => m.FaturaProjetada),
             MesMaisApertado = meses.Min(m => m.SaldoFinalProjetado),
             Meses = meses,
-            Lancamentos = lancamentos.Select(ToDto).ToList()
+            Lancamentos = lancamentos.Select(ToDto).ToList(),
+            Faturas = faturas.Select(ToDto).ToList()
         };
     }
 
@@ -96,6 +109,35 @@ public class PlanejamentoCartaoCreditoService : IPlanejamentoCartaoCreditoServic
             Mes = dto.Mes,
             Ano = dto.Ano
         });
+
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task CriarOuAtualizarFaturaAsync(FaturaCartaoCreditoDto dto, CancellationToken cancellationToken = default)
+    {
+        var cartao = string.IsNullOrWhiteSpace(dto.Cartao) ? "ITAU" : dto.Cartao.Trim().ToUpperInvariant();
+        var fatura = await _context.FaturasCartaoCredito.FirstOrDefaultAsync(f =>
+            f.Cartao == cartao && f.Ano == dto.Ano && f.Mes == dto.Mes,
+            cancellationToken);
+
+        if (fatura is null)
+        {
+            _context.FaturasCartaoCredito.Add(new FaturaCartaoCredito
+            {
+                Cartao = cartao,
+                ValorTotal = dto.ValorTotal,
+                Mes = dto.Mes,
+                Ano = dto.Ano,
+                Vencimento = dto.Vencimento,
+                Observacao = dto.Observacao
+            });
+        }
+        else
+        {
+            fatura.ValorTotal = dto.ValorTotal;
+            fatura.Vencimento = dto.Vencimento;
+            fatura.Observacao = dto.Observacao;
+        }
 
         await _context.SaveChangesAsync(cancellationToken);
     }
@@ -167,5 +209,16 @@ public class PlanejamentoCartaoCreditoService : IPlanejamentoCartaoCreditoServic
         MesInicial = lancamento.MesInicial,
         AnoInicial = lancamento.AnoInicial,
         Observacao = lancamento.Observacao
+    };
+
+    private static FaturaCartaoCreditoDto ToDto(FaturaCartaoCredito fatura) => new()
+    {
+        Id = fatura.Id,
+        Cartao = fatura.Cartao,
+        ValorTotal = fatura.ValorTotal,
+        Mes = fatura.Mes,
+        Ano = fatura.Ano,
+        Vencimento = fatura.Vencimento,
+        Observacao = fatura.Observacao
     };
 }

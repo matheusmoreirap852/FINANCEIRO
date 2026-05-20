@@ -16,6 +16,7 @@ public class AppDbContext : DbContext
     public DbSet<Orcamento> Orcamentos => Set<Orcamento>();
     public DbSet<ReceitaMensal> ReceitasMensais => Set<ReceitaMensal>();
     public DbSet<LancamentoCartaoCredito> LancamentosCartaoCredito => Set<LancamentoCartaoCredito>();
+    public DbSet<FaturaCartaoCredito> FaturasCartaoCredito => Set<FaturaCartaoCredito>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -76,6 +77,15 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Cartao).HasMaxLength(120).IsRequired();
             entity.Property(e => e.ValorTotal).HasPrecision(18, 2);
             entity.Property(e => e.Observacao).HasMaxLength(500);
+        });
+
+        modelBuilder.Entity<FaturaCartaoCredito>(entity =>
+        {
+            entity.ToTable("FaturasCartaoCredito");
+            entity.Property(e => e.Cartao).HasMaxLength(120).IsRequired();
+            entity.Property(e => e.ValorTotal).HasPrecision(18, 2);
+            entity.Property(e => e.Observacao).HasMaxLength(500);
+            entity.HasIndex(e => new { e.Cartao, e.Ano, e.Mes }).IsUnique();
         });
 
         Seed(modelBuilder);
