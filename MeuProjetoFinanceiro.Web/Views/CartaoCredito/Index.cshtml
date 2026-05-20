@@ -1,0 +1,180 @@
+@model MeuProjetoFinanceiro.Application.Dtos.PlanejamentoCartaoCreditoDto
+@{
+    ViewData["Title"] = "Cartao de Credito";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">Cartao de credito</h1>
+        <p class="text-muted mb-0">Planeje entradas, parcelas e faturas para saber quando o mes vai apertar.</p>
+    </div>
+    <form method="get" class="d-flex gap-2">
+        <input class="form-control" type="number" name="ano" value="@Model.Ano" style="width: 110px" />
+        <button class="btn btn-outline-primary" type="submit">Ver ano</button>
+    </form>
+</div>
+
+@if (TempData["Sucesso"] is not null)
+{
+    <div class="alert alert-success">@TempData["Sucesso"]</div>
+}
+@if (TempData["Erro"] is not null)
+{
+    <div class="alert alert-danger">@TempData["Erro"]</div>
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <span class="text-muted">Media de entrada</span>
+                <h2 class="h4 mb-0">@Model.ReceitaMedia.ToString("C")</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <span class="text-muted">Maior fatura projetada</span>
+                <h2 class="h4 mb-0">@Model.MaiorFaturaProjetada.ToString("C")</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <span class="text-muted">Mes mais apertado</span>
+                <h2 class="h4 mb-0 @(Model.MesMaisApertado < 0 ? "text-danger" : "text-success")">@Model.MesMaisApertado.ToString("C")</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-semibold">Lancar compra parcelada</div>
+            <div class="card-body">
+                <form asp-action="LancarCompra" method="post" class="row g-3">
+                    @Html.AntiForgeryToken()
+                    <div class="col-md-8">
+                        <label class="form-label">Descricao</label>
+                        <input class="form-control" name="Descricao" placeholder="Ex: Compra mercado, passagem, dentista" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Cartao</label>
+                        <input class="form-control" name="Cartao" value="Cartao geral" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Valor total</label>
+                        <input class="form-control" name="ValorTotal" type="number" min="0" step="0.01" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Parcelas</label>
+                        <input class="form-control" name="QuantidadeParcelas" type="number" min="1" value="1" />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Mes</label>
+                        <input class="form-control" name="MesInicial" type="number" min="1" max="12" value="@DateTime.Today.Month" />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Ano</label>
+                        <input class="form-control" name="AnoInicial" type="number" value="@Model.Ano" />
+                    </div>
+                    <div class="col-12">
+                        <button class="btn btn-primary" type="submit">Adicionar ao planejamento</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-semibold">Lancar entrada extra</div>
+            <div class="card-body">
+                <form asp-action="LancarReceita" method="post" class="row g-3">
+                    @Html.AntiForgeryToken()
+                    <div class="col-md-6">
+                        <label class="form-label">Descricao</label>
+                        <input class="form-control" name="Descricao" placeholder="Ex: Aluguel da casa, bonus, ferias" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Valor</label>
+                        <input class="form-control" name="Valor" type="number" min="0" step="0.01" />
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label">Mes</label>
+                        <input class="form-control" name="Mes" type="number" min="1" max="12" value="@DateTime.Today.Month" />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Ano</label>
+                        <input class="form-control" name="Ano" type="number" value="@Model.Ano" />
+                    </div>
+                    <div class="col-12">
+                        <button class="btn btn-outline-primary" type="submit">Adicionar entrada</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white fw-semibold">Projecao mensal</div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Mes</th>
+                    <th class="text-end">Entradas</th>
+                    <th class="text-end">Cartao</th>
+                    <th class="text-end">Outras despesas</th>
+                    <th class="text-end">Sobra apos cartao</th>
+                    <th class="text-end">Resultado final</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var mes in Model.Meses)
+            {
+                <tr class="@(mes.Estourou ? "table-danger" : "")">
+                    <td>@mes.Periodo</td>
+                    <td class="text-end text-success">@mes.ReceitaPrevista.ToString("C")</td>
+                    <td class="text-end text-danger">@mes.FaturaProjetada.ToString("C")</td>
+                    <td class="text-end">@mes.OutrasDespesas.ToString("C")</td>
+                    <td class="text-end">@mes.SaldoAposCartao.ToString("C")</td>
+                    <td class="text-end fw-semibold @(mes.SaldoFinalProjetado < 0 ? "text-danger" : "text-success")">@mes.SaldoFinalProjetado.ToString("C")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white fw-semibold">Compras parceladas lancadas</div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead><tr><th>Descricao</th><th>Cartao</th><th>Inicio</th><th class="text-end">Parcelas</th><th class="text-end">Valor total</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var item in Model.Lancamentos)
+            {
+                <tr>
+                    <td>@item.Descricao</td>
+                    <td>@item.Cartao</td>
+                    <td>@item.MesInicial/@item.AnoInicial</td>
+                    <td class="text-end">@item.QuantidadeParcelas</td>
+                    <td class="text-end">@item.ValorTotal.ToString("C")</td>
+                    <td class="text-end">
+                        <form asp-action="RemoverLancamento" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@item.Id" />
+                            <input type="hidden" name="ano" value="@Model.Ano" />
+                            <button class="btn btn-sm btn-outline-danger" type="submit">Remover</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

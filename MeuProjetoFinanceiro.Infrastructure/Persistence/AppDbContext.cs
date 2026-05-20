@@ -14,6 +14,8 @@ public class AppDbContext : DbContext
     public DbSet<Categoria> Categorias => Set<Categoria>();
     public DbSet<Transacao> Transacoes => Set<Transacao>();
     public DbSet<Orcamento> Orcamentos => Set<Orcamento>();
+    public DbSet<ReceitaMensal> ReceitasMensais => Set<ReceitaMensal>();
+    public DbSet<LancamentoCartaoCredito> LancamentosCartaoCredito => Set<LancamentoCartaoCredito>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -57,6 +59,23 @@ public class AppDbContext : DbContext
                 .WithMany(c => c.Orcamentos)
                 .HasForeignKey(e => e.CategoriaId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ReceitaMensal>(entity =>
+        {
+            entity.ToTable("ReceitasMensais");
+            entity.Property(e => e.Descricao).HasMaxLength(160).IsRequired();
+            entity.Property(e => e.Valor).HasPrecision(18, 2);
+            entity.HasIndex(e => new { e.Ano, e.Mes, e.Descricao }).IsUnique();
+        });
+
+        modelBuilder.Entity<LancamentoCartaoCredito>(entity =>
+        {
+            entity.ToTable("LancamentosCartaoCredito");
+            entity.Property(e => e.Descricao).HasMaxLength(180).IsRequired();
+            entity.Property(e => e.Cartao).HasMaxLength(120).IsRequired();
+            entity.Property(e => e.ValorTotal).HasPrecision(18, 2);
+            entity.Property(e => e.Observacao).HasMaxLength(500);
         });
 
         Seed(modelBuilder);
