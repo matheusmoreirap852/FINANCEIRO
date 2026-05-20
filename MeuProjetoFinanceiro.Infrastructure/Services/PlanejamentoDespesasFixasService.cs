@@ -16,6 +16,7 @@ public class PlanejamentoDespesasFixasService : IPlanejamentoDespesasFixasServic
         "Divida ativa dezembro",
         "Total pass",
         "BALAO CASA",
+        "Parcela da moto",
         "Uber",
         "Casa",
         "Jiu Jitsu"
@@ -139,7 +140,8 @@ public class PlanejamentoDespesasFixasService : IPlanejamentoDespesasFixasServic
     {
         var texto = descricao.Trim();
         var separador = texto.LastIndexOf(" - ", StringComparison.Ordinal);
-        return separador > 0 ? texto[..separador].Trim() : texto;
+        var nome = separador > 0 ? texto[..separador].Trim() : texto;
+        return nome.Equals("Uber", StringComparison.OrdinalIgnoreCase) ? "Parcela da moto" : nome;
     }
 
     private async Task<ContaFinanceira> ObterOuCriarContaAsync(CancellationToken cancellationToken)
