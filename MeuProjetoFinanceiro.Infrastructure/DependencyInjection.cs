@@ -23,7 +23,7 @@ public static class DependencyInjection
         services.AddScoped<ICrudService<CategoriaDto>, CategoriaService>();
         services.AddScoped<ICrudService<TransacaoDto>, TransacaoService>();
         services.AddScoped<ICrudService<OrcamentoDto>, OrcamentoService>();
-        services.AddScoped<IDashboardFinanceiroService, DashboardFinanceiroService>();
+        services.AddScoped<IDashboardFinanceiroService, DashboardFinanceiroConsolidadoService>();
         services.AddScoped<IImportacaoPlanilhaFinanceiraService, ImportacaoPlanilhaFinanceiraService>();
         services.AddScoped<IPlanejamentoCartaoCreditoService, PlanejamentoCartaoCreditoService>();
         services.AddScoped<IPlanejamentoDespesasFixasService, PlanejamentoDespesasFixasService>();
