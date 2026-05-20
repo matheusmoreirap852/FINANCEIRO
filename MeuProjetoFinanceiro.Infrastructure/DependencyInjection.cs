@@ -3,6 +3,7 @@ using MeuProjetoFinanceiro.Application.Interfaces;
 using MeuProjetoFinanceiro.Application.Services;
 using MeuProjetoFinanceiro.Infrastructure.Persistence;
 using MeuProjetoFinanceiro.Infrastructure.Repositories;
+using MeuProjetoFinanceiro.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,6 +24,7 @@ public static class DependencyInjection
         services.AddScoped<ICrudService<TransacaoDto>, TransacaoService>();
         services.AddScoped<ICrudService<OrcamentoDto>, OrcamentoService>();
         services.AddScoped<IDashboardFinanceiroService, DashboardFinanceiroService>();
+        services.AddScoped<IImportacaoPlanilhaFinanceiraService, ImportacaoPlanilhaFinanceiraService>();
 
         return services;
     }

@@ -1,0 +1,49 @@
+@model MeuProjetoFinanceiro.Application.Dtos.ImportacaoPlanilhaResultadoDto?
+@{
+    ViewData["Title"] = "Importacao";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">Importar planilha</h1>
+        <p class="text-muted mb-0">Envie sua planilha de controle financeiro para gerar transacoes mensais automaticamente.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+                    <label class="form-label" for="arquivo">Planilha Excel</label>
+                    <input class="form-control" id="arquivo" name="arquivo" type="file" accept=".xlsx" />
+                    <button class="btn btn-primary mt-3" type="submit">Importar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h2 class="h5">Como a importacao interpreta sua planilha</h2>
+                <ul class="mb-0 text-muted">
+                    <li>Linhas da area de proventos viram receitas.</li>
+                    <li>Linhas da area de despesas viram despesas.</li>
+                    <li>Colunas mensais viram lancamentos por mes.</li>
+                    <li>Totais e saldos sao ignorados para evitar duplicidade.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model is not null)
+{
+    <div class="alert alert-success mt-4">
+        <strong>@Model.Mensagem</strong>
+        <div>Receitas: @Model.ReceitasImportadas | Despesas: @Model.DespesasImportadas | Ignoradas: @Model.TransacoesIgnoradas</div>
+    </div>
+}
