@@ -26,6 +26,7 @@ public static class DependencyInjection
         services.AddScoped<IDashboardFinanceiroService, DashboardFinanceiroService>();
         services.AddScoped<IImportacaoPlanilhaFinanceiraService, ImportacaoPlanilhaFinanceiraService>();
         services.AddScoped<IPlanejamentoCartaoCreditoService, PlanejamentoCartaoCreditoService>();
+        services.AddScoped<IPlanejamentoDespesasFixasService, PlanejamentoDespesasFixasService>();
 
         return services;
     }

@@ -42,7 +42,7 @@ public class PlanejamentoCartaoCreditoService : IPlanejamentoCartaoCreditoServic
                 var receitaMes = receitas.Where(r => r.Mes == mes).Sum(r => r.Valor);
                 var faturaProjetada = lancamentos.Sum(l => ValorParcelaNoMes(l, ano, mes));
                 var outrasDespesas = despesasImportadas
-                    .Where(t => t.Data.Year == ano && t.Data.Month == mes && !PareceCartao(t.Descricao))
+                    .Where(t => t.Data.Year == ano && t.Data.Month == mes && !PareceCartao(t.Descricao) && !PlanejamentoDespesasFixasService.EhDespesaFixa(t.Descricao))
                     .Sum(t => t.Valor);
 
                 return new ResumoCartaoMesDto
