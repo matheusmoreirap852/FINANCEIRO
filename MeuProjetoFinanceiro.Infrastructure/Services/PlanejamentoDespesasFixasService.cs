@@ -19,6 +19,7 @@ public class PlanejamentoDespesasFixasService : IPlanejamentoDespesasFixasServic
         "Parcela da moto",
         "Uber",
         "Casa",
+        "Condominio",
         "Jiu Jitsu"
     ];
 
