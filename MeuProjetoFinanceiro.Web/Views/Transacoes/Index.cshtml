@@ -1,0 +1,26 @@
+@model IReadOnlyList<MeuProjetoFinanceiro.Application.Dtos.TransacaoDto>
+@{
+    ViewData["Title"] = "Transacoes";
+}
+
+<h1 class="h3 mb-3">Transacoes</h1>
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead><tr><th>Data</th><th>Descricao</th><th>Conta</th><th>Categoria</th><th>Tipo</th><th class="text-end">Valor</th></tr></thead>
+            <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Data.ToString("dd/MM/yyyy")</td>
+                    <td>@item.Descricao</td>
+                    <td>@item.ContaNome</td>
+                    <td>@item.CategoriaNome</td>
+                    <td>@item.Tipo</td>
+                    <td class="text-end">@item.Valor.ToString("C")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

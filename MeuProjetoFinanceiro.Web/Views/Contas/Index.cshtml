@@ -1,0 +1,21 @@
+@model IReadOnlyList<MeuProjetoFinanceiro.Application.Dtos.ContaFinanceiraDto>
+@{
+    ViewData["Title"] = "Contas";
+}
+
+<h1 class="h3 mb-3">Contas financeiras</h1>
+<div class="row g-3">
+@foreach (var item in Model)
+{
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted">@item.Instituicao</div>
+                <h2 class="h5">@item.Nome</h2>
+                <div>@item.Tipo</div>
+                <strong>@item.SaldoAtual.ToString("C")</strong>
+            </div>
+        </div>
+    </div>
+}
+</div>

@@ -1,0 +1,102 @@
+@model MeuProjetoFinanceiro.Application.Dtos.DashboardFinanceiroDto
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">Dashboard financeiro</h1>
+        <p class="text-muted mb-0">Resumo mensal de receitas, despesas, saldo e orcamentos.</p>
+    </div>
+    <form class="d-flex gap-2" method="get">
+        <input class="form-control" type="date" name="inicio" value="@ViewBag.Inicio" />
+        <input class="form-control" type="date" name="fim" value="@ViewBag.Fim" />
+        <button class="btn btn-primary" type="submit">Filtrar</button>
+    </form>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <span class="text-muted">Receitas</span>
+                <h2 class="h4 text-success mb-0">@Model.ReceitaTotal.ToString("C")</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <span class="text-muted">Despesas</span>
+                <h2 class="h4 text-danger mb-0">@Model.DespesaTotal.ToString("C")</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <span class="text-muted">Resultado</span>
+                <h2 class="h4 mb-0">@Model.Resultado.ToString("C")</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <span class="text-muted">Saldo total</span>
+                <h2 class="h4 mb-0">@Model.SaldoTotal.ToString("C")</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-semibold">Ultimas transacoes</div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Descricao</th>
+                            <th>Categoria</th>
+                            <th class="text-end">Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in Model.UltimasTransacoes)
+                    {
+                        <tr>
+                            <td>@item.Data.ToString("dd/MM/yyyy")</td>
+                            <td>@item.Descricao</td>
+                            <td>@item.CategoriaNome</td>
+                            <td class="text-end @(item.Tipo == MeuProjetoFinanceiro.Core.Enums.TipoTransacao.Despesa ? "text-danger" : "text-success")">@item.Valor.ToString("C")</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-semibold">Orcamentos do mes</div>
+            <div class="list-group list-group-flush">
+            @foreach (var item in Model.Orcamentos)
+            {
+                var percentual = item.ValorPlanejado == 0 ? 0 : Math.Min(100, (int)((item.ValorRealizado / item.ValorPlanejado) * 100));
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between">
+                        <strong>@item.CategoriaNome</strong>
+                        <span>@item.ValorRealizado.ToString("C") / @item.ValorPlanejado.ToString("C")</span>
+                    </div>
+                    <div class="progress mt-2" style="height: 8px;">
+                        <div class="progress-bar" role="progressbar" style="width: @percentual%"></div>
+                    </div>
+                </div>
+            }
+            </div>
+        </div>
+    </div>
+</div>
