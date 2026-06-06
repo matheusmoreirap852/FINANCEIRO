@@ -18,7 +18,10 @@ html {
 }
 
 body {
-  margin-bottom: 60px;
+  min-height: 100vh;
+  margin: 0;
+  background: #f3f5f7;
+  color: #111827;
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
@@ -28,4 +31,231 @@ body {
 
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
+}
+
+.app-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  background: #202529;
+  color: #f8fafc;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, .22);
+}
+
+.app-brand {
+  color: #fff;
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.app-brand:hover {
+  color: #fff;
+}
+
+.app-menu-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .35rem .65rem;
+  border-color: rgba(255, 255, 255, .28);
+  color: #fff;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.app-menu-toggle:focus {
+  box-shadow: 0 0 0 .2rem rgba(255, 255, 255, .25);
+}
+
+.app-menu-icon {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.app-user {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  color: #cbd5e1;
+  font-weight: 600;
+}
+
+.app-user-badge {
+  padding: .25rem .55rem;
+  border-radius: 999px;
+  color: #dbeafe;
+  background: #334155;
+  font-size: .8rem;
+}
+
+.app-shell {
+  min-height: calc(100vh - 58px);
+  display: flex;
+}
+
+.app-sidebar {
+  width: 230px;
+  flex: 0 0 230px;
+  flex-direction: column;
+  background: #1f2937;
+  color: #e5e7eb;
+}
+
+.app-sidebar-title {
+  padding: 1.4rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+  background: #111827;
+  font-weight: 800;
+}
+
+.app-nav {
+  display: flex;
+  flex-direction: column;
+  padding: .6rem 0;
+}
+
+.app-nav a {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  min-height: 46px;
+  padding: .75rem 1.15rem;
+  border-left: 4px solid transparent;
+  color: #d1d5db;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.app-nav a:hover,
+.app-nav a.active {
+  color: #fff;
+  background: #374151;
+  border-left-color: #198754;
+}
+
+.app-nav-icon {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, .08);
+  font-size: .78rem;
+  font-weight: 800;
+}
+
+.app-content {
+  min-width: 0;
+  flex: 1;
+  padding: 2rem;
+}
+
+.card {
+  border-radius: 8px;
+}
+
+.card-header {
+  border-top-left-radius: 8px !important;
+  border-top-right-radius: 8px !important;
+}
+
+.module-card > .card-header,
+.finance-card-header {
+  background: #198754 !important;
+  color: #fff;
+  font-weight: 800;
+}
+
+.table thead th {
+  background: #202529;
+  color: #fff;
+  border-color: #3b4147;
+}
+
+.table tbody tr:nth-child(even):not(.table-success):not(.table-info):not(.table-warning):not(.table-danger) {
+  background: #f1f3f5;
+}
+
+.btn-primary,
+.btn-success {
+  background-color: #198754;
+  border-color: #198754;
+}
+
+.btn-primary:hover,
+.btn-success:hover {
+  background-color: #146c43;
+  border-color: #146c43;
+}
+
+.controle-mensal-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.controle-mensal-scrollbar {
+  height: 18px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-bottom: 1px solid var(--bs-border-color);
+}
+
+.controle-mensal-scrollbar-inner {
+  height: 1px;
+}
+
+.controle-mensal-scroll {
+  max-height: calc(100vh - 250px);
+}
+
+.controle-mensal-table {
+  min-width: 1680px;
+}
+
+.controle-mensal-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
+.controle-mensal-table .sticky-col {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background-color: var(--bs-table-bg, var(--bs-body-bg));
+}
+
+.controle-mensal-table thead .sticky-col {
+  z-index: 4;
+}
+
+.controle-mensal-table input[type="number"] {
+  min-width: 96px;
+}
+
+.controle-mensal-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+}
+
+@media (max-width: 991.98px) {
+  .app-shell {
+    display: block;
+  }
+
+  .app-sidebar {
+    width: 100%;
+    flex-basis: auto;
+  }
+
+  .app-content {
+    padding: 1rem;
+  }
 }

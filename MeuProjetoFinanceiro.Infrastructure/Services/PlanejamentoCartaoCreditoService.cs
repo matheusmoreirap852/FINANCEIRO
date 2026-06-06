@@ -102,9 +102,32 @@ public class PlanejamentoCartaoCreditoService : IPlanejamentoCartaoCreditoServic
 
     public async Task CriarReceitaAsync(ReceitaMensalDto dto, CancellationToken cancellationToken = default)
     {
+        var descricao = dto.Descricao.Trim();
+        var receitas = await _context.ReceitasMensais
+            .Where(r => r.Ano == dto.Ano && r.Mes == dto.Mes)
+            .ToListAsync(cancellationToken);
+        var existentes = receitas
+            .Where(r => r.Descricao.Trim().Equals(descricao, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(r => r.Id)
+            .ToList();
+        var existente = existentes.FirstOrDefault();
+
+        if (existente is not null)
+        {
+            if (existentes.Count == 1)
+            {
+                existente.Descricao = descricao;
+            }
+
+            existente.Valor = dto.Valor;
+            _context.ReceitasMensais.RemoveRange(existentes.Skip(1));
+            await _context.SaveChangesAsync(cancellationToken);
+            return;
+        }
+
         _context.ReceitasMensais.Add(new ReceitaMensal
         {
-            Descricao = dto.Descricao,
+            Descricao = descricao,
             Valor = dto.Valor,
             Mes = dto.Mes,
             Ano = dto.Ano
