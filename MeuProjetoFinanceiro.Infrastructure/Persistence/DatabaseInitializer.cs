@@ -85,22 +85,23 @@ public class DatabaseInitializer : IHostedService
 
     private static async Task GarantirFaturasItauDaPlanilhaAsync(AppDbContext context, CancellationToken cancellationToken)
     {
-        var faturas = new (int Ano, int Mes, decimal Valor)[]
+        var faturas = new (string Cartao, int Ano, int Mes, decimal Valor, int DiaVencimento)[]
         {
-            (2025, 12, 7000.00m),
-            (2026, 1, 10994.37m),
-            (2026, 2, 6403.40m),
-            (2026, 3, 10897.29m),
-            (2026, 4, 9779.51m),
-            (2026, 5, 12017.73m),
-            (2026, 6, 38234.40m),
-            (2026, 7, 3699.51m),
-            (2026, 8, 699.51m),
-            (2026, 9, 699.51m),
-            (2026, 10, 699.51m),
-            (2026, 11, 519.51m),
-            (2026, 12, 519.51m),
-            (2027, 6, 519.51m)
+            ("ITAU UNICLASS", 2025, 12, 7000.00m, 20),
+            ("ITAU UNICLASS", 2026, 1, 10994.37m, 20),
+            ("ITAU UNICLASS", 2026, 2, 6403.40m, 20),
+            ("ITAU UNICLASS", 2026, 3, 10897.29m, 20),
+            ("ITAU UNICLASS", 2026, 4, 9779.51m, 20),
+            ("ITAU UNICLASS", 2026, 5, 13969.47m, 15),
+            ("ITAU UNICLASS", 2026, 6, 20241.00m, 15),
+            ("ITAU UNICLASS", 2026, 7, 3193.92m, 15),
+            ("ITAU UNICLASS", 2026, 8, 821.06m, 15),
+            ("ITAU UNICLASS", 2026, 9, 821.06m, 15),
+            ("ITAU UNICLASS", 2026, 10, 821.06m, 15),
+            ("ITAU UNICLASS", 2026, 11, 557.52m, 15),
+            ("ITAU UNICLASS", 2026, 12, 519.52m, 15),
+            ("VISA", 2026, 5, 4263.15m, 18),
+            ("VISA", 2026, 6, 484.73m, 18)
         };
 
         foreach (var fatura in faturas)
@@ -108,13 +109,13 @@ public class DatabaseInitializer : IHostedService
             await context.Database.ExecuteSqlRawAsync(
                 """
                 INSERT INTO "FaturasCartaoCredito" ("Cartao", "ValorTotal", "Mes", "Ano", "Vencimento", "Observacao")
-                SELECT 'ITAU', {0}, {1}, {2}, {3}, 'Fatura informada pela planilha'
+                SELECT {0}, {1}, {2}, {3}, {4}, 'Fatura real informada pelo app do banco'
                 WHERE NOT EXISTS (
                     SELECT 1 FROM "FaturasCartaoCredito"
-                    WHERE "Cartao" = 'ITAU' AND "Mes" = {1} AND "Ano" = {2}
+                    WHERE "Cartao" = {0} AND "Mes" = {2} AND "Ano" = {3}
                 );
                 """,
-                [fatura.Valor, fatura.Mes, fatura.Ano, new DateTime(fatura.Ano, fatura.Mes, 20)],
+                [fatura.Cartao, fatura.Valor, fatura.Mes, fatura.Ano, new DateTime(fatura.Ano, fatura.Mes, fatura.DiaVencimento)],
                 cancellationToken);
         }
     }

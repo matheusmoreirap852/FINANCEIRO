@@ -81,16 +81,20 @@ public class ControleMensalService : IControleMensalService
             Destaque = true
         });
 
-        var totalCartao = meses.Select(mes => faturas.Where(f => f.Mes == mes).Sum(f => f.ValorTotal)).ToList();
-        linhas.Add(new ControleMensalLinhaDto
+        foreach (var grupoCartao in faturas.GroupBy(f => f.Cartao).OrderBy(g => g.Key))
         {
-            Grupo = "Cartao",
-            Nome = "ITAU",
-            Valores = totalCartao.Select(v => (decimal?)v).ToList(),
-            PodeEditar = true,
-            Destaque = true,
-            NegativoRuim = true
-        });
+            linhas.Add(new ControleMensalLinhaDto
+            {
+                Grupo = "Cartao",
+                Nome = grupoCartao.Key,
+                Valores = ValoresPorMes(meses, mes => grupoCartao.Where(f => f.Mes == mes).Sum(f => f.ValorTotal)),
+                PodeEditar = true,
+                Destaque = true,
+                NegativoRuim = true
+            });
+        }
+
+        var totalCartao = meses.Select(mes => faturas.Where(f => f.Mes == mes).Sum(f => f.ValorTotal)).ToList();
 
         var outros = despesas
             .Where(d => !PlanejamentoDespesasFixasService.EhDespesaFixa(d.Descricao) && !PareceCartao(d.Descricao))
