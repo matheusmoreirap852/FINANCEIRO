@@ -1,15 +1,89 @@
-@model IReadOnlyList<MeuProjetoFinanceiro.Application.Dtos.TransacaoDto>
+@model MeuProjetoFinanceiro.Web.Models.TransacoesIndexViewModel
 @{
     ViewData["Title"] = "Transacoes";
 }
 
 <h1 class="h3 mb-3">Transacoes</h1>
+
+@if (TempData["Sucesso"] is not null)
+{
+    <div class="alert alert-success">@TempData["Sucesso"]</div>
+}
+@if (TempData["Erro"] is not null)
+{
+    <div class="alert alert-danger">@TempData["Erro"]</div>
+}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white fw-semibold">Cadastrar locacao</div>
+    <div class="card-body">
+        <form asp-action="CadastrarLocacao" method="post" class="row g-3">
+            @Html.AntiForgeryToken()
+            <div class="col-md-3">
+                <label class="form-label">Descricao</label>
+                <input class="form-control" name="Descricao" value="@Model.Locacao.Descricao" placeholder="Ex: Aluguel" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Valor</label>
+                <input class="form-control" name="Valor" type="number" min="0" step="0.01" value="@(Model.Locacao.Valor > 0 ? Model.Locacao.Valor.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) : string.Empty)" />
+            </div>
+            <div class="col-md-1">
+                <label class="form-label">Dia</label>
+                <input class="form-control" name="Dia" type="number" min="1" max="31" value="@Model.Locacao.Dia" />
+            </div>
+            <div class="col-md-1">
+                <label class="form-label">Mes</label>
+                <input class="form-control" name="Mes" type="number" min="1" max="12" value="@Model.Locacao.Mes" />
+            </div>
+            <div class="col-md-1">
+                <label class="form-label">Ano</label>
+                <input class="form-control" name="Ano" type="number" min="2000" max="2100" value="@Model.Locacao.Ano" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Conta</label>
+                <select class="form-select" name="ContaFinanceiraId">
+                    @foreach (var conta in Model.Contas)
+                    {
+                        if (conta.Id == Model.Locacao.ContaFinanceiraId)
+                        {
+                            <option value="@conta.Id" selected>@conta.Nome</option>
+                        }
+                        else
+                        {
+                            <option value="@conta.Id">@conta.Nome</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Categoria</label>
+                <select class="form-select" name="CategoriaId">
+                    @foreach (var categoria in Model.CategoriasDespesa)
+                    {
+                        if (categoria.Id == Model.Locacao.CategoriaId)
+                        {
+                            <option value="@categoria.Id" selected>@categoria.Nome</option>
+                        }
+                        else
+                        {
+                            <option value="@categoria.Id">@categoria.Nome</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-12">
+                <button class="btn btn-primary" type="submit">Cadastrar locacao</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="card border-0 shadow-sm">
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
             <thead><tr><th>Data</th><th>Descricao</th><th>Conta</th><th>Categoria</th><th>Tipo</th><th class="text-end">Valor</th></tr></thead>
             <tbody>
-            @foreach (var item in Model)
+            @foreach (var item in Model.Transacoes)
             {
                 <tr>
                     <td>@item.Data.ToString("dd/MM/yyyy")</td>
