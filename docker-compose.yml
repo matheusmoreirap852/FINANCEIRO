@@ -2,6 +2,8 @@ services:
   web:
     image: mcr.microsoft.com/dotnet/sdk:10.0
     working_dir: /app
+    environment:
+      ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection:-Data Source=financeiro.db}
     volumes:
       - .:/app
     command: dotnet run --project MeuProjetoFinanceiro.Web --urls http://0.0.0.0:8080
@@ -11,6 +13,8 @@ services:
   api:
     image: mcr.microsoft.com/dotnet/sdk:10.0
     working_dir: /app
+    environment:
+      ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection:-Data Source=financeiro.db}
     volumes:
       - .:/app
     command: dotnet run --project MeuProjetoFinanceiro.API --urls http://0.0.0.0:8081

@@ -17,7 +17,17 @@ public static class DependencyInjection
         var connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? "Data Source=financeiro.db";
 
-        services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
+        services.AddDbContext<AppDbContext>(options =>
+        {
+            if (EhPostgres(connectionString))
+            {
+                AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+                options.UseNpgsql(connectionString);
+                return;
+            }
+
+            options.UseSqlite(connectionString);
+        });
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped<ICrudService<ContaFinanceiraDto>, ContaFinanceiraService>();
         services.AddScoped<ICrudService<CategoriaDto>, CategoriaService>();
@@ -31,4 +41,10 @@ public static class DependencyInjection
 
         return services;
     }
+
+    private static bool EhPostgres(string connectionString)
+        => connectionString.StartsWith("Host=", StringComparison.OrdinalIgnoreCase)
+           || connectionString.StartsWith("Server=", StringComparison.OrdinalIgnoreCase)
+           || connectionString.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase)
+           || connectionString.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase);
 }

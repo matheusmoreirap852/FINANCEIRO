@@ -18,7 +18,11 @@ public class DatabaseInitializer : IHostedService
         using var scope = _serviceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         await context.Database.EnsureCreatedAsync(cancellationToken);
-        await CriarTabelasDePlanejamentoAsync(context, cancellationToken);
+        if (context.Database.IsSqlite())
+        {
+            await CriarTabelasDePlanejamentoAsync(context, cancellationToken);
+        }
+
         await GarantirFaturasItauDaPlanilhaAsync(context, cancellationToken);
     }
 
