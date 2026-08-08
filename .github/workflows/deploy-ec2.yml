@@ -111,6 +111,7 @@ jobs:
 
             cd "$EC2_APP_DIR/MeuProjetoFinanceiro"
             API_IMAGE="$API_IMAGE" FRONTEND_IMAGE="$FRONTEND_IMAGE" docker compose --env-file .env -f docker-compose.ec2.images.yml pull
+            docker ps -aq --filter "name=meuprojetofinanceiro" | xargs -r docker rm -f
             API_IMAGE="$API_IMAGE" FRONTEND_IMAGE="$FRONTEND_IMAGE" docker compose --env-file .env -f docker-compose.ec2.images.yml up -d
             docker image prune -f
           EOF
