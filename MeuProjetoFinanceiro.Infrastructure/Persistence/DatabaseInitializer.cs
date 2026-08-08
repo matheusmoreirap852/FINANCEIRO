@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System.Text.RegularExpressions;
 
 namespace MeuProjetoFinanceiro.Infrastructure.Persistence;
@@ -10,28 +11,65 @@ public class DatabaseInitializer : IHostedService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<DatabaseInitializer> _logger;
+    private Task? _initializationTask;
 
-    public DatabaseInitializer(IServiceProvider serviceProvider, IConfiguration configuration)
+    public DatabaseInitializer(
+        IServiceProvider serviceProvider,
+        IConfiguration configuration,
+        ILogger<DatabaseInitializer> logger)
     {
         _serviceProvider = serviceProvider;
         _configuration = configuration;
+        _logger = logger;
     }
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    public Task StartAsync(CancellationToken cancellationToken)
     {
-        using var scope = _serviceProvider.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        await CriarSchemaPostgresAsync(context, cancellationToken);
-        await context.Database.EnsureCreatedAsync(cancellationToken);
-        if (context.Database.IsSqlite())
+        _initializationTask = Task.Run(() => InicializarAsync(cancellationToken), cancellationToken);
+        return Task.CompletedTask;
+    }
+
+    public async Task StopAsync(CancellationToken cancellationToken)
+    {
+        if (_initializationTask is null)
         {
-            await CriarTabelasDePlanejamentoAsync(context, cancellationToken);
+            return;
         }
 
-        await GarantirFaturasItauDaPlanilhaAsync(context, cancellationToken);
+        await Task.WhenAny(_initializationTask, Task.Delay(TimeSpan.FromSeconds(5), cancellationToken));
     }
 
-    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    private async Task InicializarAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeout.CancelAfter(TimeSpan.FromSeconds(60));
+
+            using var scope = _serviceProvider.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+            _logger.LogInformation("Iniciando preparacao do banco de dados.");
+            await CriarSchemaPostgresAsync(context, timeout.Token);
+            await context.Database.EnsureCreatedAsync(timeout.Token);
+            if (context.Database.IsSqlite())
+            {
+                await CriarTabelasDePlanejamentoAsync(context, timeout.Token);
+            }
+
+            await GarantirFaturasItauDaPlanilhaAsync(context, timeout.Token);
+            _logger.LogInformation("Preparacao do banco de dados finalizada.");
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("Preparacao do banco de dados excedeu o tempo limite e continuara na proxima inicializacao.");
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "Falha ao preparar o banco de dados.");
+        }
+    }
 
     private async Task CriarSchemaPostgresAsync(AppDbContext context, CancellationToken cancellationToken)
     {
