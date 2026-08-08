@@ -4,6 +4,7 @@ using MeuProjetoFinanceiro.Application.Services;
 using MeuProjetoFinanceiro.Core.Enums;
 using MeuProjetoFinanceiro.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 
 namespace MeuProjetoFinanceiro.Infrastructure.Services;
 
@@ -25,6 +26,11 @@ public class DashboardFinanceiroConsolidadoService : IDashboardFinanceiroService
         var meses = EnumerarMeses(dataInicio, dataFim).ToList();
         var anos = meses.Select(m => m.Year).Distinct().ToList();
 
+        if (_context.Database.IsNpgsql())
+        {
+            return await GetResumoPostgresLeveAsync(dataInicio);
+        }
+
         if (_context.Database.IsSqlite())
         {
             await GarantirReceitasPadraoAsync(dataInicio.Year);
@@ -45,11 +51,6 @@ public class DashboardFinanceiroConsolidadoService : IDashboardFinanceiroService
 
         var faturasCartao = meses.Sum(mes =>
             faturas.Where(f => f.Ano == mes.Year && f.Mes == mes.Month).Sum(f => f.ValorTotal));
-
-        if (_context.Database.IsNpgsql())
-        {
-            return CriarResumoLeve(dataInicio, receitaTotal, faturasCartao);
-        }
 
         var transacoes = await _context.Transacoes
             .Where(t => t.Data.Date >= dataInicio && t.Data.Date <= dataFim)
@@ -135,6 +136,58 @@ public class DashboardFinanceiroConsolidadoService : IDashboardFinanceiroService
             LabelsCategorias = ["Despesas fixas", "Cartao", "Outras despesas"],
             ValoresCategorias = [despesasFixas, faturasCartao, outrasDespesas]
         };
+    }
+
+    private async Task<DashboardFinanceiroDto> GetResumoPostgresLeveAsync(DateTime dataInicio)
+    {
+        var schema = _context.Model.GetDefaultSchema() ?? "public";
+        var schemaSeguro = schema.Replace("\"", "\"\"");
+        var receitaTotal = await SomarMesAsync(schemaSeguro, "ReceitasMensais", dataInicio);
+        var faturasCartao = await SomarMesAsync(schemaSeguro, "FaturasCartaoCredito", dataInicio);
+
+        return CriarResumoLeve(dataInicio, receitaTotal, faturasCartao);
+    }
+
+    private async Task<decimal> SomarMesAsync(string schema, string tabela, DateTime data)
+    {
+        var connection = _context.Database.GetDbConnection();
+        var deveFechar = connection.State != ConnectionState.Open;
+
+        if (deveFechar)
+        {
+            await connection.OpenAsync();
+        }
+
+        try
+        {
+            await using var command = connection.CreateCommand();
+            command.CommandTimeout = 8;
+            command.CommandText = $"""
+                SELECT COALESCE(SUM("Valor"), 0)
+                FROM "{schema}"."{tabela}"
+                WHERE "Ano" = @ano AND "Mes" = @mes;
+                """;
+
+            var ano = command.CreateParameter();
+            ano.ParameterName = "ano";
+            ano.Value = data.Year;
+            command.Parameters.Add(ano);
+
+            var mes = command.CreateParameter();
+            mes.ParameterName = "mes";
+            mes.Value = data.Month;
+            command.Parameters.Add(mes);
+
+            var result = await command.ExecuteScalarAsync();
+            return Convert.ToDecimal(result);
+        }
+        finally
+        {
+            if (deveFechar)
+            {
+                await connection.CloseAsync();
+            }
+        }
     }
 
     private static DashboardFinanceiroDto CriarResumoLeve(DateTime dataInicio, decimal receitaTotal, decimal faturasCartao)
