@@ -24,7 +24,10 @@ public class DashboardFinanceiroConsolidadoService : IDashboardFinanceiroService
         var dataFim = fim?.Date ?? dataInicio.AddMonths(1).AddDays(-1);
         var meses = EnumerarMeses(dataInicio, dataFim).ToList();
 
-        await GarantirReceitasPadraoAsync(dataInicio.Year);
+        if (_context.Database.IsSqlite())
+        {
+            await GarantirReceitasPadraoAsync(dataInicio.Year);
+        }
 
         var anos = meses.Select(m => m.Year).Distinct().ToList();
         var receitasBase = await _context.ReceitasMensais

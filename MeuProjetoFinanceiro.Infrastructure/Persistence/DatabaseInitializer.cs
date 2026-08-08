@@ -52,6 +52,12 @@ public class DatabaseInitializer : IHostedService
 
             _logger.LogInformation("Iniciando preparacao do banco de dados.");
             await CriarSchemaPostgresAsync(context, timeout.Token);
+            if (context.Database.IsNpgsql())
+            {
+                _logger.LogInformation("Banco PostgreSQL detectado. Pulando EnsureCreated automatico em runtime.");
+                return;
+            }
+
             await context.Database.EnsureCreatedAsync(timeout.Token);
             if (context.Database.IsSqlite())
             {
