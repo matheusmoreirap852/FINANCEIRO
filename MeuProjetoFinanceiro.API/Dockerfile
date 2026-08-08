@@ -21,6 +21,10 @@ WORKDIR /app
 ENV ASPNETCORE_URLS=http://0.0.0.0:8081
 ENV ASPNETCORE_ENVIRONMENT=Production
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN mkdir -p /data
 COPY --from=build /app/publish .
 
