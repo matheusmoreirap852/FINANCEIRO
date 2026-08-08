@@ -4,6 +4,7 @@ using MeuProjetoFinanceiro.Application.Services;
 using MeuProjetoFinanceiro.Core.Enums;
 using MeuProjetoFinanceiro.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Data;
 
 namespace MeuProjetoFinanceiro.Infrastructure.Services;
@@ -12,11 +13,16 @@ public class DashboardFinanceiroConsolidadoService : IDashboardFinanceiroService
 {
     private readonly AppDbContext _context;
     private readonly ICrudService<OrcamentoDto> _orcamentos;
+    private readonly ILogger<DashboardFinanceiroConsolidadoService> _logger;
 
-    public DashboardFinanceiroConsolidadoService(AppDbContext context, ICrudService<OrcamentoDto> orcamentos)
+    public DashboardFinanceiroConsolidadoService(
+        AppDbContext context,
+        ICrudService<OrcamentoDto> orcamentos,
+        ILogger<DashboardFinanceiroConsolidadoService> logger)
     {
         _context = context;
         _orcamentos = orcamentos;
+        _logger = logger;
     }
 
     public async Task<DashboardFinanceiroDto> GetResumoAsync(DateTime? inicio = null, DateTime? fim = null)
@@ -140,10 +146,22 @@ public class DashboardFinanceiroConsolidadoService : IDashboardFinanceiroService
 
     private async Task<DashboardFinanceiroDto> GetResumoPostgresLeveAsync(DateTime dataInicio)
     {
-        var schema = _context.Model.GetDefaultSchema() ?? "public";
-        var schemaSeguro = schema.Replace("\"", "\"\"");
-        var receitaTotal = await SomarMesAsync(schemaSeguro, "ReceitasMensais", dataInicio);
-        var faturasCartao = await SomarMesAsync(schemaSeguro, "FaturasCartaoCredito", dataInicio);
+        decimal receitaTotal;
+        decimal faturasCartao;
+
+        try
+        {
+            var schema = _context.Model.GetDefaultSchema() ?? "public";
+            var schemaSeguro = schema.Replace("\"", "\"\"");
+            receitaTotal = await SomarMesAsync(schemaSeguro, "ReceitasMensais", dataInicio);
+            faturasCartao = await SomarMesAsync(schemaSeguro, "FaturasCartaoCredito", dataInicio);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Nao foi possivel carregar o resumo do dashboard no PostgreSQL.");
+            receitaTotal = 0m;
+            faturasCartao = 0m;
+        }
 
         return CriarResumoLeve(dataInicio, receitaTotal, faturasCartao);
     }
