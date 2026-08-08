@@ -1,13 +1,17 @@
 using MeuProjetoFinanceiro.Core.Entities;
 using MeuProjetoFinanceiro.Core.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace MeuProjetoFinanceiro.Infrastructure.Persistence;
 
 public class AppDbContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+    private readonly string? _schema;
+
+    public AppDbContext(DbContextOptions<AppDbContext> options, IConfiguration configuration) : base(options)
     {
+        _schema = configuration["Database:Schema"];
     }
 
     public DbSet<ContaFinanceira> ContasFinanceiras => Set<ContaFinanceira>();
@@ -20,6 +24,11 @@ public class AppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        if (!string.IsNullOrWhiteSpace(_schema))
+        {
+            modelBuilder.HasDefaultSchema(_schema);
+        }
+
         modelBuilder.Entity<ContaFinanceira>(entity =>
         {
             entity.ToTable("ContasFinanceiras");

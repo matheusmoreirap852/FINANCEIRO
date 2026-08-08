@@ -1,0 +1,11 @@
+services:
+  api:
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    working_dir: /app
+    environment:
+      ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection:-Data Source=financeiro.db}
+    volumes:
+      - .:/app
+    command: dotnet run --project MeuProjetoFinanceiro.API --urls http://0.0.0.0:8081
+    ports:
+      - "8081:8081"

@@ -1,0 +1,16 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: MeuProjetoFinanceiro.API/Dockerfile
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: ${EC2_CONNECTION_STRING:-Data Source=/data/financeiro.db}
+    volumes:
+      - financeiro_data:/data
+    ports:
+      - "8081:8081"
+
+volumes:
+  financeiro_data:

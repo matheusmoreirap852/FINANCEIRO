@@ -1,0 +1,35 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: MeuProjetoFinanceiro.API/Dockerfile
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://0.0.0.0:8081
+      ConnectionStrings__DefaultConnection: ${EC2_CONNECTION_STRING:-Data Source=/data/financeiro.db}
+      Database__Schema: ${EC2_DATABASE_SCHEMA:-}
+      Auth__Username: ${Auth__Username:-admin}
+      Auth__Password: ${Auth__Password:-admin}
+      Auth__JwtKey: ${Auth__JwtKey:-dev-only-change-this-key-with-at-least-32-characters}
+      Auth__Issuer: ${Auth__Issuer:-MeuProjetoFinanceiro}
+      Auth__Audience: ${Auth__Audience:-MeuProjetoFinanceiro.App}
+    volumes:
+      - financeiro_data:/data
+    ports:
+      - "127.0.0.1:${API_PORT:-8081}:8081"
+
+  frontend:
+    build:
+      context: ../MeuProjetoFinanceiro.Frontend
+      dockerfile: Dockerfile
+      args:
+        EXPO_PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL:-/api}
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+
+volumes:
+  financeiro_data:

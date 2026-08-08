@@ -61,14 +61,29 @@ public class ControleMensalService : IControleMensalService
         });
 
         var despesasFixas = despesas.Where(d => PlanejamentoDespesasFixasService.EhDespesaFixa(d.Descricao)).ToList();
-        foreach (var grupo in despesasFixas.GroupBy(d => NormalizarDescricao(d.Descricao)).OrderBy(g => g.Key))
+        var nomesDespesasFixas = PlanejamentoDespesasFixasService.NomesFixosPadrao
+            .Select(NormalizarDescricao)
+            .Concat(despesasFixas.Select(d => NormalizarDescricao(d.Descricao)))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(nome => nome)
+            .ToList();
+
+        foreach (var nomeDespesaFixa in nomesDespesasFixas)
         {
+            var despesasDaLinha = despesasFixas
+                .Where(d => NormalizarDescricao(d.Descricao).Equals(nomeDespesaFixa, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            var despesaPadrao = PlanejamentoDespesasFixasService.NomesFixosPadrao
+                .Select(NormalizarDescricao)
+                .Contains(nomeDespesaFixa, StringComparer.OrdinalIgnoreCase);
+
             linhas.Add(new ControleMensalLinhaDto
             {
                 Grupo = "Despesas Fixas",
-                Nome = grupo.Key,
-                Valores = ValoresPorMes(meses, mes => grupo.Where(d => d.Data.Month == mes).Sum(d => d.Valor)),
-                PodeEditar = true
+                Nome = nomeDespesaFixa,
+                Valores = ValoresPorMes(meses, mes => despesasDaLinha.Where(d => d.Data.Month == mes).Sum(d => d.Valor)),
+                PodeEditar = true,
+                PodeExcluir = !despesaPadrao
             });
         }
 
@@ -89,6 +104,7 @@ public class ControleMensalService : IControleMensalService
                 Nome = grupoCartao.Key,
                 Valores = ValoresPorMes(meses, mes => grupoCartao.Where(f => f.Mes == mes).Sum(f => f.ValorTotal)),
                 PodeEditar = true,
+                PodeExcluir = true,
                 Destaque = true,
                 NegativoRuim = true
             });
@@ -189,6 +205,27 @@ public class ControleMensalService : IControleMensalService
         await _context.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task RemoverLinhaAsync(int ano, string grupo, string nome, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(grupo) || string.IsNullOrWhiteSpace(nome))
+        {
+            return;
+        }
+
+        switch (grupo.Trim())
+        {
+            case "Entradas":
+                await RemoverEntradaAsync(ano, nome, cancellationToken);
+                break;
+            case "Despesas Fixas":
+                await RemoverDespesaFixaAsync(ano, nome, cancellationToken);
+                break;
+            case "Cartao":
+                await RemoverFaturaAsync(ano, nome, cancellationToken);
+                break;
+        }
+    }
+
     private async Task AtualizarReceitaAsync(int ano, int mes, string descricao, decimal valor, CancellationToken cancellationToken)
     {
         var entrada = NormalizarEntrada(descricao);
@@ -217,6 +254,26 @@ public class ControleMensalService : IControleMensalService
 
         receita.Descricao = entrada;
         receita.Valor = valor;
+    }
+
+    private async Task RemoverFaturaAsync(int ano, string cartao, CancellationToken cancellationToken)
+    {
+        var nomeCartao = cartao.Trim();
+        var faturas = await _context.FaturasCartaoCredito
+            .Where(f => f.Ano == ano)
+            .ToListAsync(cancellationToken);
+
+        var remover = faturas
+            .Where(f => f.Cartao.Equals(nomeCartao, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        if (remover.Count == 0)
+        {
+            return;
+        }
+
+        _context.FaturasCartaoCredito.RemoveRange(remover);
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     private async Task AtualizarFaturaAsync(int ano, int mes, string cartao, decimal valor, CancellationToken cancellationToken)
@@ -285,6 +342,27 @@ public class ControleMensalService : IControleMensalService
         var totalAtual = despesasDaLinha.Sum(d => d.Valor);
         var diferenca = valor - totalAtual;
         despesasDaLinha[0].Valor += diferenca;
+    }
+
+    private async Task RemoverDespesaFixaAsync(int ano, string nome, CancellationToken cancellationToken)
+    {
+        var nomeLinha = nome.Trim();
+        var despesas = await _context.Transacoes
+            .Where(t => t.Tipo == TipoTransacao.Despesa && t.Data.Year == ano)
+            .ToListAsync(cancellationToken);
+
+        var remover = despesas
+            .Where(d => PlanejamentoDespesasFixasService.EhDespesaFixa(d.Descricao)
+                        && NormalizarDescricao(d.Descricao).Equals(nomeLinha, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        if (remover.Count == 0)
+        {
+            return;
+        }
+
+        _context.Transacoes.RemoveRange(remover);
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     private async Task<ContaFinanceira> ObterOuCriarContaAsync(CancellationToken cancellationToken)

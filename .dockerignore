@@ -1,0 +1,11 @@
+.git
+.env
+artifacts
+bin
+obj
+**/bin
+**/obj
+*.db
+*.db-shm
+*.db-wal
+*.backup-*
