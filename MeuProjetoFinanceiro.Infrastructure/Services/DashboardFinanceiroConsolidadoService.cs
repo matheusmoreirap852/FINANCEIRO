@@ -23,23 +23,16 @@ public class DashboardFinanceiroConsolidadoService : IDashboardFinanceiroService
         var dataInicio = inicio?.Date ?? new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
         var dataFim = fim?.Date ?? dataInicio.AddMonths(1).AddDays(-1);
         var meses = EnumerarMeses(dataInicio, dataFim).ToList();
+        var anos = meses.Select(m => m.Year).Distinct().ToList();
 
         if (_context.Database.IsSqlite())
         {
             await GarantirReceitasPadraoAsync(dataInicio.Year);
         }
 
-        var anos = meses.Select(m => m.Year).Distinct().ToList();
         var receitasBase = await _context.ReceitasMensais
             .Where(r => anos.Contains(r.Ano))
             .AsNoTracking()
-            .ToListAsync();
-
-        var transacoes = await _context.Transacoes
-            .Where(t => t.Data.Date >= dataInicio && t.Data.Date <= dataFim)
-            .AsNoTracking()
-            .Include(t => t.Categoria)
-            .Include(t => t.ContaFinanceira)
             .ToListAsync();
 
         var faturas = await _context.FaturasCartaoCredito
@@ -50,11 +43,26 @@ public class DashboardFinanceiroConsolidadoService : IDashboardFinanceiroService
         var receitaTotal = meses.Sum(mes =>
             receitasBase.Where(r => r.Ano == mes.Year && r.Mes == mes.Month).Sum(r => r.Valor));
 
+        var faturasCartao = meses.Sum(mes =>
+            faturas.Where(f => f.Ano == mes.Year && f.Mes == mes.Month).Sum(f => f.ValorTotal));
+
+        if (_context.Database.IsNpgsql())
+        {
+            return CriarResumoLeve(dataInicio, receitaTotal, faturasCartao);
+        }
+
+        var transacoes = await _context.Transacoes
+            .Where(t => t.Data.Date >= dataInicio && t.Data.Date <= dataFim)
+            .AsNoTracking()
+            .Include(t => t.Categoria)
+            .Include(t => t.ContaFinanceira)
+            .ToListAsync();
+
         var despesasFixas = meses.Sum(mes => transacoes
             .Where(t => t.Data.Year == mes.Year && t.Data.Month == mes.Month && PlanejamentoDespesasFixasService.EhDespesaFixa(t.Descricao))
             .Sum(t => t.Valor));
 
-        var faturasCartao = meses.Sum(mes =>
+        faturasCartao = meses.Sum(mes =>
         {
             var faturaFechada = faturas.Where(f => f.Ano == mes.Year && f.Mes == mes.Month).Sum(f => f.ValorTotal);
             if (faturaFechada > 0)
@@ -126,6 +134,42 @@ public class DashboardFinanceiroConsolidadoService : IDashboardFinanceiroService
                 .ToList(),
             LabelsCategorias = ["Despesas fixas", "Cartao", "Outras despesas"],
             ValoresCategorias = [despesasFixas, faturasCartao, outrasDespesas]
+        };
+    }
+
+    private static DashboardFinanceiroDto CriarResumoLeve(DateTime dataInicio, decimal receitaTotal, decimal faturasCartao)
+    {
+        var despesaTotal = faturasCartao;
+
+        return new DashboardFinanceiroDto
+        {
+            ReceitaTotal = receitaTotal,
+            DespesaTotal = despesaTotal,
+            Resultado = receitaTotal - despesaTotal,
+            SaldoTotal = receitaTotal - despesaTotal,
+            TransacoesPendentes = 0,
+            UltimasTransacoes =
+            [
+                new()
+                {
+                    Data = dataInicio,
+                    Descricao = "Receitas do periodo",
+                    CategoriaNome = "Entradas",
+                    Tipo = TipoTransacao.Receita,
+                    Valor = receitaTotal
+                },
+                new()
+                {
+                    Data = dataInicio,
+                    Descricao = "Cartao de credito",
+                    CategoriaNome = "Cartao",
+                    Tipo = TipoTransacao.Despesa,
+                    Valor = faturasCartao
+                }
+            ],
+            Orcamentos = [],
+            LabelsCategorias = ["Cartao"],
+            ValoresCategorias = [faturasCartao]
         };
     }
 
