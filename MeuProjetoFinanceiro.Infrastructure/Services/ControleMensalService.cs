@@ -18,8 +18,11 @@ public class ControleMensalService : IControleMensalService
 
     public async Task<ControleMensalDto> ObterAsync(int ano, CancellationToken cancellationToken = default)
     {
-        await GarantirReceitasPadraoAsync(ano, cancellationToken);
-        await ConsolidarReceitasAsync(ano, cancellationToken);
+        if (_context.Database.IsSqlite())
+        {
+            await GarantirReceitasPadraoAsync(ano, cancellationToken);
+            await ConsolidarReceitasAsync(ano, cancellationToken);
+        }
 
         var receitas = await _context.ReceitasMensais
             .Where(r => r.Ano == ano)

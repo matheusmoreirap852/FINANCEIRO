@@ -153,8 +153,8 @@ public class DashboardFinanceiroConsolidadoService : IDashboardFinanceiroService
         {
             var schema = _context.Model.GetDefaultSchema() ?? "public";
             var schemaSeguro = schema.Replace("\"", "\"\"");
-            receitaTotal = await SomarMesAsync(schemaSeguro, "ReceitasMensais", dataInicio);
-            faturasCartao = await SomarMesAsync(schemaSeguro, "FaturasCartaoCredito", dataInicio);
+            receitaTotal = await SomarMesAsync(schemaSeguro, "ReceitasMensais", "Valor", dataInicio);
+            faturasCartao = await SomarMesAsync(schemaSeguro, "FaturasCartaoCredito", "ValorTotal", dataInicio);
         }
         catch (Exception exception)
         {
@@ -166,7 +166,7 @@ public class DashboardFinanceiroConsolidadoService : IDashboardFinanceiroService
         return CriarResumoLeve(dataInicio, receitaTotal, faturasCartao);
     }
 
-    private async Task<decimal> SomarMesAsync(string schema, string tabela, DateTime data)
+    private async Task<decimal> SomarMesAsync(string schema, string tabela, string colunaValor, DateTime data)
     {
         var connection = _context.Database.GetDbConnection();
         var deveFechar = connection.State != ConnectionState.Open;
@@ -181,7 +181,7 @@ public class DashboardFinanceiroConsolidadoService : IDashboardFinanceiroService
             await using var command = connection.CreateCommand();
             command.CommandTimeout = 8;
             command.CommandText = $"""
-                SELECT COALESCE(SUM("Valor"), 0)
+                SELECT COALESCE(SUM("{colunaValor}"), 0)
                 FROM "{schema}"."{tabela}"
                 WHERE "Ano" = @ano AND "Mes" = @mes;
                 """;
