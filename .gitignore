@@ -2,13 +2,16 @@ bin/
 obj/
 .vs/
 .vscode/
+.DS_Store
 *.user
 *.suo
 *.db
+*.db.backup-*
 *.db-shm
 *.db-wal
 *.lscache
 TestResults/
 coverage/
+artifacts/
 appsettings.Production.json
 .env

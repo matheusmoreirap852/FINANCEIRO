@@ -23,6 +23,8 @@ public class PlanejamentoDespesasFixasService : IPlanejamentoDespesasFixasServic
         "Jiu Jitsu"
     ];
 
+    public static IReadOnlyList<string> NomesFixosPadrao => NomesFixos;
+
     private readonly AppDbContext _context;
 
     public PlanejamentoDespesasFixasService(AppDbContext context)
